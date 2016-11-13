@@ -6,7 +6,6 @@
 #include "noperipheral.h"
 
 NoPeripheral::NoPeripheral() {
-    Serial.println("No Peripheral constructor");
     _vcc = 0;
 }
 
@@ -14,16 +13,17 @@ NoPeripheral::NoPeripheral(ESP_MQTTLogger& l) {
     // set the logger if we know it and call begin
     _logger = l;
     NoPeripheral();
-
 }
 
 void NoPeripheral::begin(ESP_MQTTLogger& l) {
+    // set up the logger
     _logger = l;
-    _vcc = 1000;
-    Serial.println("No Peripheral configurator");
 }
 
 void NoPeripheral::publish_data() {
-    Serial.print("Publishing data: ");
-    Serial.println(_vcc);
+
+    // publish the system related information
+    _logger.publish("chip/vcc", String(ESP.getVcc()) );
+    _logger.publish("chip/free_heap", String(ESP.getFreeHeap()) );
+    _logger.publish("chip/run_time", String(millis()) );
 }

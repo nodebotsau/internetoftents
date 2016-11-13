@@ -198,10 +198,6 @@ void loop() {
           logger.publish("temp/c", temp);
       }
 
-      // system related information
-      logger.publish("chip/vcc", String(ESP.getVcc()) );
-      logger.publish("chip/free_heap", String(ESP.getFreeHeap()) );
-      logger.publish("chip/run_time", String(millis()) );
 
       delay(100);
       WiFi.disconnect();
