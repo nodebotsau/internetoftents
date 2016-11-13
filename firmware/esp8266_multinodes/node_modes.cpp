@@ -1,15 +1,13 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <stdio.h>
-#include <ESP8266WiFi.h>
-#include <WiFiClientSecure.h>
 #include <ESP8266WebServer.h>
-#include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <ESP_MQTTLogger.h>
 
 #include "peripherals.h"
 #include "noperipheral.h"
+#include "temp_peripheral.h"
 
 #include "./node_modes.h"
 bool _state_config = false;
@@ -23,18 +21,23 @@ MODES _mode = NONE;
 void setup_node_peripherals(ESP_MQTTLogger& l) {
     // here we take the mode and we set up the sensors we're going to be using.
 
+    Serial.println("Setting up node peripherals");
+
     _vcc_sensor = new NoPeripheral();
     _vcc_sensor->begin(l);
 
-    Serial.println("Setting up the node peripherals");
+    _device_peripheral = new TempPeripheral();
+    _device_peripheral->begin(l);
 
 }
 
 void publish_peripheral_data() {
+    // publish whatever the peripherals are.
 
-    Serial.println("Publishing the peripheral data");
+    Serial.println("Publishing peripheral data");
 
     _vcc_sensor->publish_data();
+    _device_peripheral->publish_data();
 }
 
 

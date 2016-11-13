@@ -7,7 +7,6 @@
 #define Peripherals_h
 
 #include "Arduino.h"
-#include <ESP_MQTTLogger.h>
 
 class Peripheral {
     public:
