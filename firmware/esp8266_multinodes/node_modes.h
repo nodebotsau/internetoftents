@@ -11,6 +11,13 @@
 // time we're prepared to wait for the config
 #define CONFIG_TIMEOUT 2000
 
+enum MODES {
+    NONE,
+    TEMP_1WIRE,
+    BARO,
+    DHT
+};
+
 
 uint8_t get_sleep_time();
 void set_sleep_time(uint8_t sleep);

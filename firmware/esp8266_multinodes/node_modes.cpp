@@ -1,8 +1,15 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <stdio.h>
-#include "./node_modes.h"
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+#include <ESP8266WebServer.h>
+#include <ArduinoJson.h>
+#include <PubSubClient.h>
+#include <ESP_MQTTLogger.h>
+#include "./peripherals.h"
 
+#include "./node_modes.h"
 bool _state_config = false;
 uint8_t _sleep_period = DEFAULT_SLEEP_MINS;
 
