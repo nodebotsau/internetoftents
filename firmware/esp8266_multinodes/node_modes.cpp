@@ -9,6 +9,7 @@
 #include "noperipheral.h"
 #include "temp_peripheral.h"
 #include "baro_peripheral.h"
+#include "dht_peripheral.h"
 
 #include "./node_modes.h"
 bool _state_config = false;
@@ -47,7 +48,7 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
 
         // THESE ARE CURRENTLY NOOPs
         case DHT:
-            _device_peripheral = new Peripheral();
+            _device_peripheral = new DHTPeripheral();
             break;
     }
 

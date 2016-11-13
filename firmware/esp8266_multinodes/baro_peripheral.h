@@ -21,11 +21,8 @@ class BaroPeripheral : public Peripheral {
         void publish_data();
 
     private:
-		Adafruit_BMP085_Unified * _bmp; // = Adafruit_BMP085_Unified(10085);
+		Adafruit_BMP085_Unified * _bmp; 
 		bool _got_sensor = false;
-/*        bool _got_temp = false;
-        OneWire * _one_wire;
-        DallasTemperature * _DS18B20;*/
 };
 
 #endif
