@@ -132,7 +132,7 @@ void setup() {
         Serial.println();
 
         // now set up sensors
-
+        setup_node_peripherals(logger);
         // locate devices on the bus
         Serial.print("Locating devices...");
         DS18B20.begin();
@@ -185,6 +185,8 @@ void loop() {
   if (! ap_mode && logger.connected()) {
 
       Serial.println("Publishing");
+
+      publish_peripheral_data();
 
       String temp;
 

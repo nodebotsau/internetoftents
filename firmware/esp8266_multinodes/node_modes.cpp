@@ -7,13 +7,36 @@
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <ESP_MQTTLogger.h>
-#include "./peripherals.h"
+
+#include "peripherals.h"
+#include "noperipheral.h"
 
 #include "./node_modes.h"
 bool _state_config = false;
 uint8_t _sleep_period = DEFAULT_SLEEP_MINS;
 
-uint8_t _mode = 0;
+Peripheral * _vcc_sensor;
+Peripheral * _device_peripheral;
+
+MODES _mode = NONE;
+
+void setup_node_peripherals(ESP_MQTTLogger& l) {
+    // here we take the mode and we set up the sensors we're going to be using.
+
+    _vcc_sensor = new NoPeripheral();
+    _vcc_sensor->begin(l);
+
+    Serial.println("Setting up the node peripherals");
+
+}
+
+void publish_peripheral_data() {
+
+    Serial.println("Publishing the peripheral data");
+
+    _vcc_sensor->publish_data();
+}
+
 
 void config_subscription(char* topic, byte* payload, unsigned int length) {
 
@@ -38,6 +61,7 @@ void config_subscription(char* topic, byte* payload, unsigned int length) {
     if (t.endsWith("sleep")) {
         set_sleep_time(p.toInt());
     } else if (t.endsWith("mode")) {
+        set_mode(p);
         Serial.println("Changing mode");
     }
 }
@@ -47,7 +71,6 @@ bool state_configured() {
 }
 
 uint8_t get_sleep_time() {
-
 
     return _sleep_period;
 }
@@ -59,6 +82,23 @@ void set_sleep_time(uint8_t sleep) {
     // TODO Write to the file system.
 }
 
+MODES get_mode() {
+    return _mode;
+}
+
+void set_mode(String modename) {
+
+    _mode = NONE;
+
+    if (modename == "1wiretemp") {
+        _mode = TEMP_1WIRE;
+    } else if (modename == "baro") {
+        _mode = BARO;
+    } else if (modename == "dht") {
+        _mode = DHT;
+    }
+
+}
 bool save_config(String filename, String value) {
     // takes a filename and a string and writes it down.
     File configFile = SPIFFS.open(filename, "w");

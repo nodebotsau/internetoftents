@@ -6,24 +6,17 @@
 #ifndef Peripherals_h
 #define Peripherals_h
 
+#include "Arduino.h"
+#include <ESP_MQTTLogger.h>
+
 class Peripheral {
     public:
-        virtual void config(ESP_MQTTLogger& l);
-        virtual void publish_data();
-    private:
+        Peripheral() {};
+        virtual ~Peripheral() {};
+        virtual void begin(ESP_MQTTLogger& l) {};
+        virtual void publish_data() {};
+    protected:
         ESP_MQTTLogger _logger;
 };
-
-
-class NoPeripheral: public Peripheral {
-    public:
-        void config(ESP_MQTTLogger& l);
-	    void publish_data();
-
-    private:
-        uint16_t _vcc;
-};
-
-
 
 #endif
