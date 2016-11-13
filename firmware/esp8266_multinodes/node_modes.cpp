@@ -8,6 +8,7 @@
 #include "peripherals.h"
 #include "noperipheral.h"
 #include "temp_peripheral.h"
+#include "baro_peripheral.h"
 
 #include "./node_modes.h"
 bool _state_config = false;
@@ -39,8 +40,12 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
             _device_peripheral = new TempPeripheral();
             break;
 
-        // THESE ARE CURRENTLY NOOPs
+        // TODO still needs hardware testing
         case BARO:
+            _device_peripheral = new BaroPeripheral();
+            break;
+
+        // THESE ARE CURRENTLY NOOPs
         case DHT:
             _device_peripheral = new Peripheral();
             break;
