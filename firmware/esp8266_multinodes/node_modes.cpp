@@ -18,26 +18,51 @@ Peripheral * _device_peripheral;
 
 MODES _mode = NONE;
 
+
 void setup_node_peripherals(ESP_MQTTLogger& l) {
     // here we take the mode and we set up the sensors we're going to be using.
 
+#ifdef DEBUG
     Serial.println("Setting up node peripherals");
+#endif
 
     _vcc_sensor = new NoPeripheral();
     _vcc_sensor->begin(l);
 
-    _device_peripheral = new TempPeripheral();
-    _device_peripheral->begin(l);
+    // choose which mode we're in and set up peripheral appropriately.
+    switch (_mode) {
 
+        case NONE:
+            break;
+
+        case TEMP_1WIRE:
+            _device_peripheral = new TempPeripheral();
+            break;
+
+        // THESE ARE CURRENTLY NOOPs
+        case BARO:
+        case DHT:
+            _device_peripheral = new Peripheral();
+            break;
+    }
+
+    if (_mode > NONE) {
+        _device_peripheral->begin(l);
+    }
 }
 
 void publish_peripheral_data() {
     // publish whatever the peripherals are.
 
+#ifdef DEBUG
     Serial.println("Publishing peripheral data");
+#endif
 
     _vcc_sensor->publish_data();
-    _device_peripheral->publish_data();
+
+    if (_mode > NONE) {
+        _device_peripheral->publish_data();
+    }
 }
 
 
@@ -47,25 +72,27 @@ void config_subscription(char* topic, byte* payload, unsigned int length) {
     //
     String t = (String)topic;
 
-    Serial.print("Topic is: ");
-    Serial.println(t);
-
     // grab the data from the payload and get it in a form we can use it.
+    //
+
     char buf[length + 1];
     for (int i = 0; i < length; i++) {
         buf[i] = (char)payload[i];
     }
     buf[length] = '\0';
-
     String p = String(buf);
-    Serial.print("Payload: ");
+
+#ifdef DEBUG
+    Serial.print("Topic: ");
+    Serial.print(t);
+    Serial.print(" Payload: ");
     Serial.println(p);
+#endif
 
     if (t.endsWith("sleep")) {
         set_sleep_time(p.toInt());
     } else if (t.endsWith("mode")) {
         set_mode(p);
-        Serial.println("Changing mode");
     }
 }
 
