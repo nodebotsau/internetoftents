@@ -41,12 +41,11 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
             _device_peripheral = new TempPeripheral();
             break;
 
-        // TODO still needs hardware testing
         case BARO:
             _device_peripheral = new BaroPeripheral();
             break;
 
-        // THESE ARE CURRENTLY NOOPs
+        // TODO still needs hardware testing
         case DHT:
             _device_peripheral = new DHTPeripheral();
             break;

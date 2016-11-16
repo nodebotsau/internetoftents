@@ -25,7 +25,7 @@ ESP_Onboarding server(&webserver);
 
 // Update these with values suitable for your network if needed.
 #define NETWORK_TIMEOUT 30000
-#define NETWORK_RETRIES 3
+#define NETWORK_RETRIES 2
 #define WAIT_PERIOD 20000
 
 String clientname;
