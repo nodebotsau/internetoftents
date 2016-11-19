@@ -5,6 +5,7 @@
 
 #include "noperipheral.h"
 
+
 NoPeripheral::NoPeripheral() {
     _vcc = 0;
 }
@@ -26,4 +27,5 @@ void NoPeripheral::publish_data() {
     _logger.publish("chip/vcc", String(ESP.getVcc()) );
     _logger.publish("chip/free_heap", String(ESP.getFreeHeap()) );
     _logger.publish("chip/run_time", String(millis()) );
+
 }

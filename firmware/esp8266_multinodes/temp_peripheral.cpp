@@ -31,11 +31,15 @@ void TempPeripheral::publish_data() {
     // publish temperature data from the sensor
     String temp;
 
-    _DS18B20->requestTemperatures();
-
-    temp = String(_DS18B20->getTempCByIndex(0));
-
     if (_got_temp) {
-      _logger.publish("temp/c", temp);
+        _DS18B20->requestTemperatures();
+
+        temp = String(_DS18B20->getTempCByIndex(0));
+
+        if (_got_temp) {
+          _logger.publish("temp/c", temp);
+        }
+    } else {
+        Serial.println("No temp reading, not publishing");
     }
 }

@@ -30,5 +30,7 @@ void DHTPeripheral::publish_data() {
     _dht->humidity().getEvent(&event);
     if (! isnan(event.relative_humidity) ) {
         _logger.publish("humidity", String(event.relative_humidity));
+    } else {
+        Serial.println("No DHT - not publishing");
     }
 }

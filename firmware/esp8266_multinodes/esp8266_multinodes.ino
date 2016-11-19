@@ -13,7 +13,7 @@ Adapted from work done on ESPlant and example MQTT sketch and refined from there
 #include <stdio.h>
 
 #include <ESP_MQTTLogger.h>
-#define MQTT_LOGGER_DEBUG true
+//#define MQTT_LOGGER_DEBUG true
 
 #include "./node_modes.h"
 
@@ -26,8 +26,9 @@ ESP_Onboarding server(&webserver);
 // Update these with values suitable for your network if needed.
 #define NETWORK_TIMEOUT 30000
 #define NETWORK_RETRIES 2
-#define WAIT_PERIOD 20000
 
+// msec to wait on the loop cycle
+#define WAIT_PERIOD 100
 String clientname;
 
 uint8_t network_tries = 0;
@@ -38,9 +39,16 @@ bool mqtt_msg_shown = false;
 WiFiClient espClient;
 ESP_MQTTLogger logger(espClient, &webserver, 1883);
 
+bool subscribed = false;
+
 long lastMsg = 0;
 
 void setup() {
+
+    // set pins to input to be explicit
+    pinMode(0, INPUT);
+    pinMode(2, INPUT);
+
     Serial.begin(115200);
     server.begin();
     logger.begin();
@@ -79,7 +87,7 @@ void setup() {
         // use config to connect
         WiFi.begin(ssid.c_str(), pass.c_str());
 
-        long start_time = millis();
+        unsigned long start_time = millis();
 
         while (WiFi.status() != WL_CONNECTED) {
             // provide a mechanism for network timeout
@@ -110,18 +118,7 @@ void setup() {
         // Do subscriptions to get the node's config data
         if (! logger.connected() ) {
             logger.connect();
-            logger.subscribe("id/#");
-
-            // wait until we get the configuration messages or time out
-            Serial.print("\nGetting config:");
-            start_time = millis();
-            while (start_time + CONFIG_TIMEOUT > millis() ) {
-                delay(100);
-                Serial.print(".");
-                logger.handleClient();
-            }
-            Serial.println();
-
+            setup_subscriptions();
             // now set up sensors
             setup_node_peripherals(logger);
         }
@@ -145,34 +142,67 @@ void setup_ap_mode() {
   ap_mode = true;
 }
 
+void setup_subscriptions() {
+    // we use this to grab node subscriptions or resubscribe if
+    // there's a failure.
+
+    subscribed = logger.subscribe("id/#");
+
+    // wait until we get the configuration messages or time out
+    Serial.print("\nGetting config:");
+    unsigned long start_time = millis();
+    while (start_time + CONFIG_TIMEOUT > millis() ) {
+        delay(100);
+        Serial.print(".");
+        logger.handleClient();
+    }
+    Serial.println();
+
+}
+
 void loop() {
 
-  // reconnect back to the MQTT server if needed
-  if (WiFi.status() == WL_CONNECTED) {
-    if (!logger.connected()) {
-        logger.connect();
-        if (! logger.connected() && ! mqtt_msg_shown ) {
-            Serial.println(F("Can't connect to MQTT server after retry. Will not hibernate now"));
-            mqtt_msg_shown = true;
-        } else if (logger.connected() ) {
-            mqtt_msg_shown = false; // reconnecting resets the message
+    // reconnect back to the MQTT server if needed
+    if (WiFi.status() == WL_CONNECTED) {
+        if (!logger.connected()) {
+            logger.connect();
+            if (! logger.connected() && ! mqtt_msg_shown ) {
+                Serial.println(F("Can't connect to MQTT server after retry. Will not hibernate now"));
+                mqtt_msg_shown = true;
+            } else if (logger.connected() ) {
+                // we have reconnected
+                mqtt_msg_shown = false; // reconnecting resets the message
+                setup_subscriptions();
+            }
+        }
+
+        if (! subscribed) {
+            setup_subscriptions();
         }
     }
-  }
 
-  server.handleClient();
-  logger.handleClient();
+    server.handleClient();
+    logger.handleClient();
 
-  if (! ap_mode && logger.connected()) {
+    if (! ap_mode && logger.connected()) {
 
-      publish_peripheral_data();
+        publish_peripheral_data();
 
-      delay(100);
-      WiFi.disconnect();
-      delay(100);
+        // now depending on if we hibernate or not determines what we do
+        // next. If we hibernate then we drop into deep sleep mode
+        if (get_sleep_time() > 0) {
 
-      Serial.print("Hibernate: ");
-      Serial.print(get_sleep_time());
-      ESP.deepSleep(get_sleep_time() * 60 * 1000l * 1000l);
-  }
+            delay(100);
+            WiFi.disconnect();
+            delay(100);
+
+            Serial.print("Hibernate: ");
+            Serial.print(get_sleep_time());
+            ESP.deepSleep(get_sleep_time() * 60 * 1000l * 1000l);
+        } else {
+            // otherwise we just wait around for a few msec and then go around
+            // the loop again
+            delay(WAIT_PERIOD);
+        }
+    }
 }

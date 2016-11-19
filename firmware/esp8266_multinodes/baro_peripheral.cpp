@@ -15,9 +15,10 @@ void BaroPeripheral::begin(ESP_MQTTLogger& l) {
 
 	// TODO refactor this because it might be on alt pins
 	Wire.begin(0, 2);
+    delay(10); // just wait for the I2C stuff all get sorted
 	if(! _bmp->begin() ) {
 		/* There was a problem detecting the BMP085 ... check your connections */
-		Serial.print("Ooops, no BMP085 detected ... Check your wiring or I2C ADDR!");
+		Serial.println("Ooops, no BMP085 detected ... Check your wiring or I2C ADDR!");
 	} else {
 		_got_sensor = true;
 	}
@@ -27,18 +28,20 @@ void BaroPeripheral::begin(ESP_MQTTLogger& l) {
 void BaroPeripheral::publish_data() {
 
     // get the sensor event and load it up/
-    sensors_event_t event;
-    _bmp->getEvent(&event);
+    if (_got_sensor) {
+        sensors_event_t event;
+        _bmp->getEvent(&event);
 
-    if (event.pressure) {
+        if (event.pressure) {
 
-        float pressure;
-        _bmp->getPressure(&pressure);
-        _logger.publish("baro/hpa", String(pressure));
+            float pressure;
+            _bmp->getPressure(&pressure);
+            _logger.publish("baro/hpa", String(pressure));
 
-        float temperature;
-        _bmp->getTemperature(&temperature);
-        _logger.publish("temp/c", String(temperature));
+            float temperature;
+            _bmp->getTemperature(&temperature);
+            _logger.publish("temp/c", String(temperature));
+        }
     }
 
 }

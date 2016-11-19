@@ -17,6 +17,7 @@ class NoPeripheral : public Peripheral {
 
     private:
         uint16_t _vcc;
+        uint16_t _lastpublish = 0;
 
 };
 

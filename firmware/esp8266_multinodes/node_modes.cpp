@@ -10,16 +10,27 @@
 #include "temp_peripheral.h"
 #include "baro_peripheral.h"
 #include "dht_peripheral.h"
+#include "servo_peripheral.h"
+
 
 #include "./node_modes.h"
 bool _state_config = false;
 uint8_t _sleep_period = DEFAULT_SLEEP_MINS;
 
+#define DEBUG true
+
+// we use this to determine the minimum period between publish messages.
+// This is so that if we're "always on" then we won't keep spamming the MQTT
+// server with messages
+#define MIN_PUBLISH_PERIOD (60 * 1000) // 60s default
+
+unsigned long _lastpublish = 0;
+unsigned long _nextpublish = 0;
+
 Peripheral * _vcc_sensor;
 Peripheral * _device_peripheral;
 
 MODES _mode = NONE;
-
 
 void setup_node_peripherals(ESP_MQTTLogger& l) {
     // here we take the mode and we set up the sensors we're going to be using.
@@ -58,17 +69,24 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
 void publish_peripheral_data() {
     // publish whatever the peripherals are.
 
+    // do a check on timing for publish
+    // we do a zero val check here to get a publish on wakeup.
+    if (millis() > _nextpublish) {
 #ifdef DEBUG
-    Serial.println("Publishing peripheral data");
+        Serial.println("Publishing peripheral data");
 #endif
 
-    _vcc_sensor->publish_data();
+        _vcc_sensor->publish_data();
 
-    if (_mode > NONE) {
-        _device_peripheral->publish_data();
+        if (_mode > NONE) {
+            _device_peripheral->publish_data();
+        }
+        _lastpublish = millis();
+        _nextpublish = _lastpublish + MIN_PUBLISH_PERIOD;
+    } else {
+        ;
     }
 }
-
 
 void config_subscription(char* topic, byte* payload, unsigned int length) {
 
@@ -122,14 +140,25 @@ MODES get_mode() {
 
 void set_mode(String modename) {
 
-    _mode = NONE;
+    if (! _state_config) {
+        _mode = NONE;
 
-    if (modename == "1wiretemp") {
-        _mode = TEMP_1WIRE;
-    } else if (modename == "baro") {
-        _mode = BARO;
-    } else if (modename == "dht") {
-        _mode = DHT;
+        if (modename == "1wiretemp") {
+            _mode = TEMP_1WIRE;
+        } else if (modename == "baro") {
+            _mode = BARO;
+        } else if (modename == "dht") {
+            _mode = DHT;
+        }
+
+        _state_config = true;
+    } else {
+        // DEAL WITH A MODE CHANGE
+        // The best thing to do here is actually trigger a
+        // deep sleep reset as it will come back up in the different
+        // mode with all the appropriate objects set up etc.
+        Serial.println("Mode reconfigure. Reset 1 sec");
+        ESP.deepSleep(1 * 1000l * 1000l);
     }
 
 }

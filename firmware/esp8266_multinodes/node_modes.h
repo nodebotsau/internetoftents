@@ -6,7 +6,7 @@
 
 #include <Arduino.h>
 
-#define DEFAULT_SLEEP_MINS 1
+#define DEFAULT_SLEEP_MINS 0
 
 // time we're prepared to wait for the config
 #define CONFIG_TIMEOUT 2000
@@ -17,6 +17,7 @@ enum MODES {
     BARO,
     DHT
 };
+
 
 void setup_node_peripherals(ESP_MQTTLogger& l);
 void publish_peripheral_data();
