@@ -6,6 +6,9 @@
 
 #include "baro_peripheral.h"
 
+#define DATA_PIN 0
+#define CLK_PIN 2
+
 BaroPeripheral::BaroPeripheral() {}
 
 void BaroPeripheral::begin(ESP_MQTTLogger& l) {
@@ -14,8 +17,9 @@ void BaroPeripheral::begin(ESP_MQTTLogger& l) {
 	_bmp = new Adafruit_BMP085_Unified(10085);
 
 	// TODO refactor this because it might be on alt pins
-	Wire.begin(0, 2);
-    delay(10); // just wait for the I2C stuff all get sorted
+
+	Wire.begin(DATA_PIN, CLK_PIN);
+    delay(100); // just wait for the I2C stuff all get sorted
 	if(! _bmp->begin() ) {
 		/* There was a problem detecting the BMP085 ... check your connections */
 		Serial.println("Ooops, no BMP085 detected ... Check your wiring or I2C ADDR!");

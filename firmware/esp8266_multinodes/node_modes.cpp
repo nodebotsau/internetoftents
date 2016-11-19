@@ -22,7 +22,7 @@ uint8_t _sleep_period = DEFAULT_SLEEP_MINS;
 // we use this to determine the minimum period between publish messages.
 // This is so that if we're "always on" then we won't keep spamming the MQTT
 // server with messages
-#define MIN_PUBLISH_PERIOD (60 * 1000) // 60s default
+#define MIN_PUBLISH_PERIOD (10 * 1000) // 60s default
 
 unsigned long _lastpublish = 0;
 unsigned long _nextpublish = 0;
@@ -37,6 +37,8 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
 
 #ifdef DEBUG
     Serial.println("Setting up node peripherals");
+    Serial.print("Defined MODE is: ");
+    Serial.println(_mode);
 #endif
 
     _vcc_sensor = new NoPeripheral();
@@ -59,11 +61,24 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
         case DHT:
             _device_peripheral = new DHTPeripheral();
             break;
+
+        case SERVO:
+            _device_peripheral = new ServoPeripheral();
+            break;
+
     }
 
     if (_mode > NONE) {
         _device_peripheral->begin(l);
     }
+
+    // As this is only called from the .ino initialiser we set this true
+    // here as it is possible that a set mode message has not arrived in time
+    // and we land in a race condition with the network. As such in setting this
+    // we explicitly state that our config is complete and if a mode change
+    // occurs after this point then we'll handle it as though it were a "live"
+    // mode change against the node
+    _state_config = true;
 }
 
 void publish_peripheral_data() {
@@ -88,15 +103,23 @@ void publish_peripheral_data() {
     }
 }
 
-void config_subscription(char* topic, byte* payload, unsigned int length) {
+void update_peripheral() {
+    // we use this to update the peripherals state if we are able to.
 
-    // handles the things around the subscription.
+    if (_mode > NONE) {
+        if (_device_peripheral->updatable() ) {
+            _device_peripheral->update();
+        }
+    }
+}
+
+void subscription_handler(char* topic, byte* payload, unsigned int length) {
+
+    // handles the things around any subscription messages
     //
     String t = (String)topic;
 
     // grab the data from the payload and get it in a form we can use it.
-    //
-
     char buf[length + 1];
     for (int i = 0; i < length; i++) {
         buf[i] = (char)payload[i];
@@ -111,10 +134,16 @@ void config_subscription(char* topic, byte* payload, unsigned int length) {
     Serial.println(p);
 #endif
 
+    // handle the message
     if (t.endsWith("sleep")) {
         set_sleep_time(p.toInt());
     } else if (t.endsWith("mode")) {
         set_mode(p);
+    } else {
+        // it's not a config message so pass it out to the peripheral
+        if (_mode > NONE) {
+            _device_peripheral->sub_handler(t, p);
+        }
     }
 }
 
@@ -141,7 +170,6 @@ MODES get_mode() {
 void set_mode(String modename) {
 
     if (! _state_config) {
-        _mode = NONE;
 
         if (modename == "1wiretemp") {
             _mode = TEMP_1WIRE;
@@ -149,6 +177,10 @@ void set_mode(String modename) {
             _mode = BARO;
         } else if (modename == "dht") {
             _mode = DHT;
+        } else if (modename == "servo") {
+            _mode = SERVO;
+        } else {
+            _mode = NONE;
         }
 
         _state_config = true;

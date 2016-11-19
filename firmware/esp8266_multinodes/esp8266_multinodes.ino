@@ -24,7 +24,7 @@ ESP8266WebServer webserver(9000);
 ESP_Onboarding server(&webserver);
 
 // Update these with values suitable for your network if needed.
-#define NETWORK_TIMEOUT 30000
+#define NETWORK_TIMEOUT 10000
 #define NETWORK_RETRIES 2
 
 // msec to wait on the loop cycle
@@ -45,16 +45,16 @@ long lastMsg = 0;
 
 void setup() {
 
-    // set pins to input to be explicit
-    pinMode(0, INPUT);
-    pinMode(2, INPUT);
+    // set pins to output to be explicit
+    pinMode(0, OUTPUT);
+    pinMode(2, OUTPUT);
 
     Serial.begin(115200);
     server.begin();
     logger.begin();
 
     // set callback for the logger
-    logger._client.setCallback(config_subscription);
+    logger._client.setCallback(subscription_handler);
 
     Serial.println("\n\n");
     Serial.print("Access Token: ");
@@ -157,7 +157,6 @@ void setup_subscriptions() {
         logger.handleClient();
     }
     Serial.println();
-
 }
 
 void loop() {
@@ -187,6 +186,7 @@ void loop() {
     if (! ap_mode && logger.connected()) {
 
         publish_peripheral_data();
+        update_peripheral();
 
         // now depending on if we hibernate or not determines what we do
         // next. If we hibernate then we drop into deep sleep mode
