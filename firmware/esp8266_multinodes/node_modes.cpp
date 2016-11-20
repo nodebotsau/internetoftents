@@ -11,7 +11,7 @@
 #include "baro_peripheral.h"
 #include "dht_peripheral.h"
 #include "servo_peripheral.h"
-
+#include "pixel_peripheral.h"
 
 #include "./node_modes.h"
 bool _state_config = false;
@@ -22,7 +22,7 @@ uint8_t _sleep_period = DEFAULT_SLEEP_MINS;
 // we use this to determine the minimum period between publish messages.
 // This is so that if we're "always on" then we won't keep spamming the MQTT
 // server with messages
-#define MIN_PUBLISH_PERIOD (10 * 1000) // 60s default
+#define MIN_PUBLISH_PERIOD (60 * 1000) // 60s default
 
 unsigned long _lastpublish = 0;
 unsigned long _nextpublish = 0;
@@ -64,6 +64,10 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
 
         case SERVO:
             _device_peripheral = new ServoPeripheral();
+            break;
+
+		case PIXEL:
+            _device_peripheral = new PixelPeripheral();
             break;
 
     }
@@ -179,6 +183,8 @@ void set_mode(String modename) {
             _mode = DHT;
         } else if (modename == "servo") {
             _mode = SERVO;
+        } else if (modename == "pixel") {
+            _mode = PIXEL;
         } else {
             _mode = NONE;
         }

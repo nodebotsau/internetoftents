@@ -16,7 +16,8 @@ enum MODES {
     TEMP_1WIRE,
     BARO,
     DHT,
-    SERVO
+    SERVO,
+    PIXEL
 };
 
 
