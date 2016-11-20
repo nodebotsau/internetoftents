@@ -14,7 +14,8 @@ enum PX_STATES {
     PXP_START,
     PXP_END,
     PXP_PIXEL,
-    PXP_STRIP
+    PXP_STRIP,
+    PXP_DATA
 };
 
 
@@ -35,6 +36,12 @@ class PixelPeripheral : public Peripheral {
         void initialise_pixels(uint16_t num_pixels);
         void set_pixel(uint16_t pixel, uint8_t r, uint8_t g, uint8_t b);
         void set_strip(uint8_t r, uint8_t g, uint8_t b);
+
+        // TODO:
+        // Do a method to allow reading a binary data stream straight into
+        // memory. This would be a stream of bytes up to _px_count * _colour_depth
+        // in length and 0 indexed. On receipt using /ic/data it just reads it
+        // off and straight into px buffer.
 
 };
 

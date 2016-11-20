@@ -105,6 +105,8 @@ void PixelPeripheral::sub_handler(String topic, String payload) {
                     state = PXP_PIXEL;
                 } else if (t == "strip") {
                     state = PXP_STRIP;
+                } else if (t == "data") {
+                    state = PXP_DATA;
                 }
                 continue;
                 break;
@@ -165,6 +167,23 @@ void PixelPeripheral::sub_handler(String topic, String payload) {
                     set_strip(r, g, b);
 
                 }
+                break;
+
+            case PXP_DATA:
+
+                // we have here a buffer of pixel data.
+                // reset to zeros
+                uint16_t px_bytes = _px_count * _colour_depth;
+                uint16_t cpy_len = px_bytes;
+
+                memset(_px, 0, px_bytes);
+                // now overwrite the px buffer
+
+                if (payload.length() < px_bytes) {
+                    cpy_len = payload.length();
+                }
+                memcpy(_px, payload.c_str(), cpy_len);
+                break;
         }
     }
 
