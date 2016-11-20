@@ -23,6 +23,10 @@ static inline uint32_t _getCycleCount(void) {
 void ICACHE_RAM_ATTR show(
  uint8_t pin, uint8_t *pixels, uint32_t numBytes) {
 
+    // turn off any interrupts
+    noInterrupts();
+
+
 #define CYCLES_800_T0H  (F_CPU / 2500000) // 0.4us
 #define CYCLES_800_T1H  (F_CPU / 1250000) // 0.8us
 #define CYCLES_800      (F_CPU /  800000) // 1.25us per bit
@@ -58,6 +62,8 @@ void ICACHE_RAM_ATTR show(
     }
   }
   while((_getCycleCount() - startTime) < period); // Wait for last bit
+
+  interrupts(); // restore the interrupts
 }
 
 

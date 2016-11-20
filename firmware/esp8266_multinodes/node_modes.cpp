@@ -17,12 +17,10 @@
 bool _state_config = false;
 uint8_t _sleep_period = DEFAULT_SLEEP_MINS;
 
-#define DEBUG true
-
 // we use this to determine the minimum period between publish messages.
 // This is so that if we're "always on" then we won't keep spamming the MQTT
 // server with messages
-#define MIN_PUBLISH_PERIOD (60 * 1000) // 60s default
+#define MIN_PUBLISH_PERIOD (5 * 60 * 1000) // 5mins default
 
 unsigned long _lastpublish = 0;
 unsigned long _nextpublish = 0;

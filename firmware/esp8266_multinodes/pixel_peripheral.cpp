@@ -9,7 +9,7 @@
 #define PIXEL_COUNT 64
 
 // corresponds to 10fps which is fast enough for static displays
-#define FRAME_MILLIS 100
+#define FRAME_MILLIS 30
 
 PixelPeripheral::PixelPeripheral() {}
 
@@ -55,8 +55,6 @@ void PixelPeripheral::initialise_pixels(uint16_t num_pixels) {
     Serial.println(_px_count);
 }
 
-
-
 void PixelPeripheral::begin(ESP_MQTTLogger& l) {
     // set up the logger
     _logger = l;
@@ -71,6 +69,8 @@ void PixelPeripheral::begin(ESP_MQTTLogger& l) {
     if (! subbed) {
         Serial.println("Couldn't subscribe to content messages");
     }
+
+    _logger.publish("oc/status", "available");
 }
 
 void PixelPeripheral::publish_data() {
@@ -80,11 +80,6 @@ void PixelPeripheral::publish_data() {
 }
 
 void PixelPeripheral::sub_handler(String topic, String payload) {
-
-    Serial.print("Pixel: Topic: ");
-    Serial.print(topic);
-    Serial.print(" Payload: ");
-    Serial.println(payload);
 
     // bust up the string so we can grab the pertinent parts.
     char s[256];
@@ -101,7 +96,6 @@ void PixelPeripheral::sub_handler(String topic, String payload) {
     while (token) {
         token = strtok(NULL, "/");
         String t = String(token);
-        Serial.println(t);
 
         switch (state) {
 
@@ -110,7 +104,6 @@ void PixelPeripheral::sub_handler(String topic, String payload) {
                 if (t == "px") {
                     state = PXP_PIXEL;
                 } else if (t == "strip") {
-                    Serial.println("Setting state to STRIP");
                     state = PXP_STRIP;
                 }
                 continue;
@@ -172,9 +165,6 @@ void PixelPeripheral::sub_handler(String topic, String payload) {
                     set_strip(r, g, b);
 
                 }
-
-
-
         }
     }
 
@@ -188,7 +178,7 @@ void PixelPeripheral::update() {
     // update is called as fast as possible and it can sometimes
     // cause issues with flicker.
     if (millis() > (_last_update + FRAME_MILLIS) ) {
-        show(PIXEL_PIN, _px, _px_count);
+        show(PIXEL_PIN, _px, _px_count * _colour_depth);
         _last_update = millis();
     }
 }
