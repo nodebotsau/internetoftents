@@ -32,5 +32,6 @@ void DHTPeripheral::publish_data() {
         _logger.publish("humidity", String(event.relative_humidity));
     } else {
         Serial.println("No DHT - not publishing");
+        _logger.publish("sys/error", "no_sensor");
     }
 }

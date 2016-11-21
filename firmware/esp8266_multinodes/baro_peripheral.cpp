@@ -23,6 +23,7 @@ void BaroPeripheral::begin(ESP_MQTTLogger& l) {
 	if(! _bmp->begin() ) {
 		/* There was a problem detecting the BMP085 ... check your connections */
 		Serial.println("Ooops, no BMP085 detected ... Check your wiring or I2C ADDR!");
+        _logger.publish("sys/error", "no_sensor");
 	} else {
 		_got_sensor = true;
 	}
@@ -40,7 +41,7 @@ void BaroPeripheral::publish_data() {
 
             float pressure;
             _bmp->getPressure(&pressure);
-            _logger.publish("baro/hpa", String(pressure));
+            _logger.publish("baro/pa", String(pressure));
 
             float temperature;
             _bmp->getTemperature(&temperature);

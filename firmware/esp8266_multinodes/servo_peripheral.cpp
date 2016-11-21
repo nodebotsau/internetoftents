@@ -23,6 +23,9 @@ void ServoPeripheral::begin(ESP_MQTTLogger& l) {
 
     if (! subbed) {
         Serial.println("Couldn't subscribe to content messages");
+        _logger.publish("sys/error", "sub_fail");
+    } else {
+        _logger.publish("oc/status", "available");
     }
 }
 

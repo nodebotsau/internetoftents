@@ -23,6 +23,7 @@ void TempPeripheral::begin(ESP_MQTTLogger& l) {
         _got_temp = true;
     } else {
         Serial.println("No devices found on 1-Wire bus");
+        _logger.publish("sys/error", "no_sensor");
     }
 }
 
