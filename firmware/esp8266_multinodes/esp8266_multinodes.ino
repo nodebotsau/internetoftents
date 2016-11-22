@@ -17,6 +17,9 @@ Adapted from work done on ESPlant and example MQTT sketch and refined from there
 
 #include "./node_modes.h"
 
+#define MN_VERSION "1.0.0"
+#define MN_COMPILE (String(MN_VERSION) + String(__DATE__) + String(__TIME__))
+
 // use this to get internal VCC value
 ADC_MODE(ADC_VCC);
 
@@ -118,6 +121,7 @@ void setup() {
         // Do subscriptions to get the node's config data
         if (! logger.connected() ) {
             logger.connect();
+            logger.publish("sys/version", MN_COMPILE);
             setup_subscriptions();
             // now set up sensors
             setup_node_peripherals(logger);
