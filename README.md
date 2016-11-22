@@ -56,6 +56,76 @@ By default, contrib packages have been installed for:
 You can install more by simply npm-installing from your project folder and use
 the packages that are provided at [http://flows.nodered.org/](http://flows.nodered.org/).
 
+## Running a local MQTT Server
+
+If you've installed the repo dependencies then you'll be able to run your own
+node-based MQTT server using `mosca`.
+
+To run the server:
+
+```
+./node_modules/.bin/mosca -v --http-port 8883
+```
+
+This will pass all the config details to the command line but should set up
+the standard MQTT server on port 1883 as well as an HTTP Websockets port on
+8883 on your local host.
+
+You can demo this working by subscribing to a topic and then publishing a message.
+
+In a new terminal execute a subscription request to the topic `hello`:
+
+```
+./node_modules/.bin/mqtt sub -t "hello" -h "localhost" -v
+```
+
+Then in yet *another* new terminal, publish a message to the `hello` topic:
+
+```
+./node_modules/.bin/mqtt pub -t 'hello' -h 'localhost' -m 'from MQTT.js'
+```
+
+If everything has gone properly then in your server terminal you should see the
+message and payload details and in the subscription terminal you should see
+the message results.
+
+Congrats, you now have your very own MQTT broker and can publish messages and
+subscribe to topics. If you wanted to, you could now point your Node-Red
+instance at it using the MQTT publish and subscribe nodes.
+
+Alternatively you can also use the BuzzConf site MQTT broker too - the details
+of which are given below.
+
+### Alternative servers
+
+If you have a linux VM or linux machine you can install mosquitto
+with simply an `apt-get install mosquitto mosquitto-client` which will give you
+a highly configurable and robust MQTT broker to play with. This is what is running
+the site infrastructure for BuzzConf.
+
+## Using the BuzzConf MQTT server
+
+The site wide MQTT server is available at `mqtt-broker.local` on the LAN. You
+must be connected to the BuzzConf network in order to be able to access it. The
+server will not be directly accessible from the Internet, however it is capable
+of publishing messages to the Internet and other relay servers.
+
+The port for the MQTT server is the standard MQTT port on `1883`.
+
+### A note about security
+
+This server and network has purposefully not been hardened for the following reasons:
+
+* The infrastructure is transient - only up for the duration of BuzzConf
+* The infrastructure is for demo and teaching purposes
+* The servers are not directly accessible from the Internet and are blocked by
+network level infrastructure.
+* Devices on this network are partitioned and can be removed relatively easily.
+
+All this is to say that security is absolutely important in any network service
+context however it must also be appropriate to the level of risk. In this instance
+that has been assessed and the appropriate levels of control implemented.
+
 ## Using an ESP8266 Module
 
 By default, all modules have been flashed with the firmware provided in the
@@ -124,6 +194,7 @@ minimum their current power reading (very useful in the case of running off batt
 their free memory and their uptime in msec. Topics are:
 
 * `ESP_XXXXXX/`
+    * `sys/version` - version and compile date and time of the firmware
     * `chip/`
         * `vcc` - power reading on the chip in approx mVolts
         * `free_heap` - bytes left on the heap

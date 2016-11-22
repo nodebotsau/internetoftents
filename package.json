@@ -29,6 +29,7 @@
     "node-red": "^0.15.2",
     "node-red-contrib-gpio": "^0.9.0",
     "node-red-contrib-influxdb": "0.0.6",
+    "node-red-dashboard": "^2.1.0",
     "nodebots-interchange": "^1.1.2"
   }
 }
