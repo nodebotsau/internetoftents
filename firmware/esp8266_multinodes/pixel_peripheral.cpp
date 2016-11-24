@@ -51,6 +51,8 @@ void PixelPeripheral::initialise_pixels(uint16_t num_pixels) {
         }
     }
 
+    pinMode(PIXEL_PIN, OUTPUT);
+
     Serial.print("Init pixels. Pixel count: ");
     Serial.println(_px_count);
 }
@@ -76,8 +78,7 @@ void PixelPeripheral::begin(ESP_MQTTLogger& l) {
 
 void PixelPeripheral::publish_data() {
 
-    // for a servo - this is a NOOP
-    //Serial.println("Pixel, no data to publish");
+    // for a pixel display - this is a NOOP
 }
 
 void PixelPeripheral::sub_handler(String topic, String payload) {

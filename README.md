@@ -268,7 +268,7 @@ possible to send an entire frame of data as a binary string.
                     Will send `available`.
     * `ic/strip` `rrggbb` - a hex colour string specifying the colour that the
                             entire strip should be changed to.
-    * `ic/pixel/<id>` `rrggbb` - `<id>` is an int representing the zero-indexed
+    * `ic/px/<id>` `rrggbb` - `<id>` is an int representing the zero-indexed
                                 pixel in the strip and `rrggbb` is a hex colour
                                 string to set that pixel to.
     * `ic/data` `bytestring` - a stream of bytes starting at pixel 0 and extending

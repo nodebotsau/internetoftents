@@ -17,8 +17,8 @@ Adapted from work done on ESPlant and example MQTT sketch and refined from there
 
 #include "./node_modes.h"
 
-#define MN_VERSION "1.0.0"
-#define MN_COMPILE (String(MN_VERSION) + String(__DATE__) + String(__TIME__))
+#define MN_VERSION "1.0.1"
+#define MN_COMPILE (String(MN_VERSION) + " - " + String(__DATE__) + " - " + String(__TIME__))
 
 // use this to get internal VCC value
 ADC_MODE(ADC_VCC);
@@ -29,12 +29,16 @@ ESP_Onboarding server(&webserver);
 // Update these with values suitable for your network if needed.
 #define NETWORK_TIMEOUT 10000
 #define NETWORK_RETRIES 2
+uint8_t network_tries = 0;
+
+// how long to wait until we subscribe again if needed in ms
+#define SUB_TIMEOUT_RETRY 20000
+unsigned long last_sub_check = 0;
+bool subscribed = false;
 
 // msec to wait on the loop cycle
 #define WAIT_PERIOD 100
 String clientname;
-
-uint8_t network_tries = 0;
 
 bool ap_mode = false;
 bool mqtt_msg_shown = false;
@@ -42,15 +46,9 @@ bool mqtt_msg_shown = false;
 WiFiClient espClient;
 ESP_MQTTLogger logger(espClient, &webserver, 1883);
 
-bool subscribed = false;
-
 long lastMsg = 0;
 
 void setup() {
-
-    // set pins to output to be explicit
-    pinMode(0, OUTPUT);
-    pinMode(2, OUTPUT);
 
     Serial.begin(115200);
     server.begin();
@@ -60,18 +58,18 @@ void setup() {
     logger._client.setCallback(subscription_handler);
 
     Serial.println("\n\n");
-    Serial.print("Access Token: ");
+    Serial.print(F("Access Token: "));
     Serial.println(server.getToken());
 
     clientname = String("ESP_") + String(ESP.getChipId(), 16);
-    Serial.print("Board Client ID: ");
+    Serial.print(F("Board Client ID: "));
     Serial.println(clientname);
 
     logger.setToken(server.getToken());
 
     bool configured = server.loadWifiCreds();
 
-    Serial.println("Load onboarding server");
+    Serial.println(F("Loading onboarding server"));
     server.startServer(configured);
 
     // do we have config
@@ -84,7 +82,7 @@ void setup() {
         String pass = server.getPassword();
 
         Serial.println("");
-        Serial.print("Connecting to ");
+        Serial.print(F("Connecting to "));
         Serial.println(ssid);
 
         // use config to connect
@@ -100,34 +98,40 @@ void setup() {
 
                 network_tries++;
                 if (network_tries > NETWORK_RETRIES) {
-                    Serial.println("\nConnection timed out, set up as AP mode");
+                    Serial.println(F("\nConnection timed out, set up as AP mode"));
                     setup_ap_mode();
                     return;
                 } else {
-                    Serial.println("\nRestart the wireless module");
+                    Serial.println(F("\nRestart the wireless module"));
                     WiFi.disconnect();
                     delay(300);
                     WiFi.begin(ssid.c_str(), pass.c_str());
                     start_time = millis();
                 }
             } else {
-                Serial.print(".");
+                Serial.print(F("."));
             }
         }
 
-        Serial.print("IP: ");
+        Serial.print(F("IP: "));
         Serial.println(WiFi.localIP());
 
         // Do subscriptions to get the node's config data
         if (! logger.connected() ) {
+            Serial.println(F("Connecting to MQTT"));
             logger.connect();
-            logger.publish("sys/version", MN_COMPILE);
-            setup_subscriptions();
-            // now set up sensors
-            setup_node_peripherals(logger);
+
+            if (logger.connected()) {
+                // now we're connected publish status.
+                logger.publish("sys/version", MN_COMPILE);
+                setup_subscriptions();
+            }
         }
 
-        return; // we're done
+        // now set up peripheral regardless of current state.
+        setup_node_peripherals(logger);
+
+        return; // we're initialised.
     }
 
     // fall back to the AP mode
@@ -153,14 +157,20 @@ void setup_subscriptions() {
     subscribed = logger.subscribe("id/#");
 
     // wait until we get the configuration messages or time out
-    Serial.print("\nGetting config:");
+    Serial.print(F("\nWaiting for config:"));
+
     unsigned long start_time = millis();
-    while (start_time + CONFIG_TIMEOUT > millis() ) {
-        delay(100);
-        Serial.print(".");
-        logger.handleClient();
+
+    if (logger.connected()) {
+        while (start_time + CONFIG_TIMEOUT > millis() ) {
+            delay(100);
+            Serial.print(F("."));
+            logger.handleClient();
+        }
+        Serial.println();
+    } else {
+        Serial.println(F("Can't connect to MQTT server"));
     }
-    Serial.println();
 }
 
 void loop() {
@@ -170,7 +180,7 @@ void loop() {
         if (!logger.connected()) {
             logger.connect();
             if (! logger.connected() && ! mqtt_msg_shown ) {
-                Serial.println(F("Can't connect to MQTT server after retry. Will not hibernate now"));
+                Serial.println(F("Can't connect to MQTT server after retry"));
                 mqtt_msg_shown = true;
             } else if (logger.connected() ) {
                 // we have reconnected
@@ -180,7 +190,14 @@ void loop() {
         }
 
         if (! subscribed) {
-            setup_subscriptions();
+            // periodically see if we can connect to the MQTT server and get
+            // our state but don't do it too frequently or we'll flood the
+            // MQTT server with subscription requests.
+            if (millis() > last_sub_check + SUB_TIMEOUT_RETRY) {
+                Serial.println(F("Attempting resubscribe"));
+                setup_subscriptions();
+                last_sub_check = millis();
+            }
         }
     }
 
@@ -200,7 +217,8 @@ void loop() {
             WiFi.disconnect();
             delay(100);
 
-            Serial.print("Hibernate: ");
+            Serial.println(F("Sleeping, make sure Deep Sleep pin is connected or I won't wake up"));
+            Serial.print(F("Sleep for: "));
             Serial.print(get_sleep_time());
             ESP.deepSleep(get_sleep_time() * 60 * 1000l * 1000l);
         } else {
