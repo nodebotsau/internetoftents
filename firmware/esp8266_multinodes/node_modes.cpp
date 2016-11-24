@@ -173,30 +173,39 @@ MODES get_mode() {
 
 void set_mode(String modename) {
 
+    MODES oldmode = _mode;
+
+    if (modename == "1wiretemp") {
+        _mode = TEMP_1WIRE;
+    } else if (modename == "baro") {
+        _mode = BARO;
+    } else if (modename == "dht") {
+        _mode = DHT;
+    } else if (modename == "servo") {
+        _mode = SERVO;
+    } else if (modename == "pixel") {
+        _mode = PIXEL;
+    } else {
+        _mode = NONE;
+    }
+
+    if (oldmode == _mode) {
+        return; // nothing to see here
+    }
+
     if (! _state_config) {
-
-        if (modename == "1wiretemp") {
-            _mode = TEMP_1WIRE;
-        } else if (modename == "baro") {
-            _mode = BARO;
-        } else if (modename == "dht") {
-            _mode = DHT;
-        } else if (modename == "servo") {
-            _mode = SERVO;
-        } else if (modename == "pixel") {
-            _mode = PIXEL;
-        } else {
-            _mode = NONE;
-        }
-
         _state_config = true;
     } else {
         // DEAL WITH A MODE CHANGE
         // The best thing to do here is actually trigger a
         // deep sleep reset as it will come back up in the different
         // mode with all the appropriate objects set up etc.
-        Serial.println("Mode reconfigure. Reset 1 sec");
+        #ifdef LIGHT_SLEEP
+        Serial.println(F("Mode reconfigure"));
+        #else
+        Serial.println(F("Mode reconfigure. Reset 1 sec"));
         ESP.deepSleep(1 * 1000l * 1000l);
+        #endif
     }
 
 }

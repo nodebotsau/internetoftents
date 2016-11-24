@@ -7,6 +7,7 @@
 #include <Arduino.h>
 
 #define DEFAULT_SLEEP_MINS 0
+#define LIGHT_SLEEP true
 
 // time we're prepared to wait for the config
 #define CONFIG_TIMEOUT 2000

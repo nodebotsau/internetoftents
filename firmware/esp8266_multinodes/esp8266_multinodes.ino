@@ -17,7 +17,9 @@ Adapted from work done on ESPlant and example MQTT sketch and refined from there
 
 #include "./node_modes.h"
 
-#define MN_VERSION "1.0.1"
+#define LIGHT_SLEEP true
+
+#define MN_VERSION "1.1.1"
 #define MN_COMPILE (String(MN_VERSION) + " - " + String(__DATE__) + " - " + String(__TIME__))
 
 // use this to get internal VCC value
@@ -75,46 +77,7 @@ void setup() {
     // do we have config
     if (configured) {
 
-        // configure station mode
-        WiFi.mode(WIFI_STA);
-
-        String ssid = server.getSSID();
-        String pass = server.getPassword();
-
-        Serial.println("");
-        Serial.print(F("Connecting to "));
-        Serial.println(ssid);
-
-        // use config to connect
-        WiFi.begin(ssid.c_str(), pass.c_str());
-
-        unsigned long start_time = millis();
-
-        while (WiFi.status() != WL_CONNECTED) {
-            // provide a mechanism for network timeout
-            delay(500);
-            if (start_time + NETWORK_TIMEOUT < millis()) {
-                // we've timed out
-
-                network_tries++;
-                if (network_tries > NETWORK_RETRIES) {
-                    Serial.println(F("\nConnection timed out, set up as AP mode"));
-                    setup_ap_mode();
-                    return;
-                } else {
-                    Serial.println(F("\nRestart the wireless module"));
-                    WiFi.disconnect();
-                    delay(300);
-                    WiFi.begin(ssid.c_str(), pass.c_str());
-                    start_time = millis();
-                }
-            } else {
-                Serial.print(F("."));
-            }
-        }
-
-        Serial.print(F("IP: "));
-        Serial.println(WiFi.localIP());
+        setup_sta_mode();
 
         // Do subscriptions to get the node's config data
         if (! logger.connected() ) {
@@ -137,6 +100,52 @@ void setup() {
     // fall back to the AP mode
     setup_ap_mode();
 }
+
+void setup_sta_mode() {
+    // Sets up the Wireless station
+
+    // configure station mode
+    WiFi.mode(WIFI_STA);
+
+    String ssid = server.getSSID();
+    String pass = server.getPassword();
+
+    Serial.println("");
+    Serial.print(F("Connecting to "));
+    Serial.println(ssid);
+
+    // use config to connect
+    WiFi.begin(ssid.c_str(), pass.c_str());
+
+    unsigned long start_time = millis();
+
+    while (WiFi.status() != WL_CONNECTED) {
+        // provide a mechanism for network timeout
+        delay(500);
+        if (start_time + NETWORK_TIMEOUT < millis()) {
+            // we've timed out
+
+            network_tries++;
+            if (network_tries > NETWORK_RETRIES) {
+                Serial.println(F("\nConnection timed out, set up as AP mode"));
+                setup_ap_mode();
+                return;
+            } else {
+                Serial.println(F("\nRestart the wireless module"));
+                WiFi.disconnect();
+                delay(300);
+                WiFi.begin(ssid.c_str(), pass.c_str());
+                start_time = millis();
+            }
+        } else {
+            Serial.print(F("."));
+        }
+    }
+
+    Serial.print(F("IP: "));
+    Serial.println(WiFi.localIP());
+}
+
 
 void setup_ap_mode() {
   Serial.printf("AP: ESP_%06X\n", ESP.getChipId());
@@ -217,10 +226,23 @@ void loop() {
             WiFi.disconnect();
             delay(100);
 
-            Serial.println(F("Sleeping, make sure Deep Sleep pin is connected or I won't wake up"));
             Serial.print(F("Sleep for: "));
-            Serial.print(get_sleep_time());
+            Serial.println(get_sleep_time());
+
+            #ifdef LIGHT_SLEEP
+            Serial.print(F("Light sleeping"));
+            Serial.println(get_sleep_time() * 60 * 1000l);
+
+            delay(get_sleep_time() * 60 * 1000l); // msec do nothing.
+            Serial.println("Waking up");
+
+            // reconnect the network
+            setup_sta_mode();
+
+            #else
+            Serial.println(F("Sleeping, make sure Deep Sleep pin is connected or I won't wake up"));
             ESP.deepSleep(get_sleep_time() * 60 * 1000l * 1000l);
+            #endif
         } else {
             // otherwise we just wait around for a few msec and then go around
             // the loop again

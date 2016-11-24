@@ -300,16 +300,36 @@ This has the full installation process that we've used for our set up as well.
 
 ## Installing the ESP8266 firmware
 
-This is not the most straightforward exercise but the following is a guide:
+this is not the most straightforward exercise but the following is a guide:
 
-* Make sure you have absolute latest Arduino IDE installed
-* Install the packages as given in the [ESPlant repo](https://github.com/CCHS-Melbourne/ESPlant/)
-* You should now be able to build the firmware from the IDE.
+* make sure you have absolute latest arduino ide installed
+* install the packages as given in the [esplant repo](https://github.com/cchs-melbourne/esplant/)
+* you should now be able to build the firmware from the ide.
 
-In addition you'll need a USB-Serial converter that can do 3.3V TTL serial and
-you have wired that up appropriately. If you're using ESP-01 modules you'll
-also need to ground the CH_PD pin when you flash in order to drop the module
+in addition you'll need a usb-serial converter that can do 3.3v ttl serial and
+you have wired that up appropriately. if you're using esp-01 modules you'll
+also need to ground the ch_pd pin when you flash in order to drop the module
 into flash mode.
 
-Alternatively, ask Andrew to flash your board.
+alternatively, ask andrew to flash your board.
+
+### configuring node to wifi and mqtt endpoint
+
+reset the wifi config
+
+```
+curl -v -h "authorization: token <<token>>" 'http://192.168.4.1:9000/wifireset'
+```
+
+set the wifi
+
+```
+curl -v -H "Authorization: Token <<TOKEN>>" 'http://192.168.4.1:9000/wifiSetup?ssid=<<SSID>>&pass=<<PASS>>'
+```
+
+Now set MQTT endpoint
+
+```
+curl -v -H "Authorization: Token <TOKEN>" 'http://<NODEIP>:9000/mqttSetup?mqtt_url=mqtt://sensors@<MQTT SERVER IP>'
+```
 
