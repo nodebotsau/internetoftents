@@ -105,7 +105,7 @@ the site infrastructure for BuzzConf.
 
 ## Using the BuzzConf MQTT server
 
-The site wide MQTT server is available at `mqtt-broker.local` on the LAN. You
+The site wide MQTT server is available at `mqtt.local` on the LAN. You
 must be connected to the BuzzConf network in order to be able to access it. The
 server will not be directly accessible from the Internet, however it is capable
 of publishing messages to the Internet and other relay servers.
