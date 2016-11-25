@@ -17,9 +17,9 @@ Adapted from work done on ESPlant and example MQTT sketch and refined from there
 
 #include "./node_modes.h"
 
-#define LIGHT_SLEEP true
+//#define LIGHT_SLEEP true
 
-#define MN_VERSION "1.1.1"
+#define MN_VERSION "1.2.0"
 #define MN_COMPILE (String(MN_VERSION) + " - " + String(__DATE__) + " - " + String(__TIME__))
 
 // use this to get internal VCC value
@@ -32,6 +32,12 @@ ESP_Onboarding server(&webserver);
 #define NETWORK_TIMEOUT 10000
 #define NETWORK_RETRIES 2
 uint8_t network_tries = 0;
+
+// 5 minutes wait time as AP in ms
+#define AP_WAIT_TIME 5 * 60 * 1000l
+
+// 10 minutes sleep time in uS
+#define AP_KILL_WAIT_TIME 10 * 60 * 1000 * 1000l
 
 // how long to wait until we subscribe again if needed in ms
 #define SUB_TIMEOUT_RETRY 20000
@@ -244,9 +250,21 @@ void loop() {
             ESP.deepSleep(get_sleep_time() * 60 * 1000l * 1000l);
             #endif
         } else {
-            // otherwise we just wait around for a few msec and then go around
-            // the loop again
-            delay(WAIT_PERIOD);
+
+            // if we're in AP mode then see if we've timed out and sleep
+            if (ap_mode && (millis() > AP_WAIT_TIME) ) {
+                // we're too long so let's reset.
+                #ifdef LIGHT_SPEEP
+                ;
+                #else
+                Serial.println(F("Going into hibernate for a bit on hope network is better"));
+                ESP.deepSleep(AP_KILL_WAIT_TIME);
+                #endif
+            } else {
+                // otherwise we just wait around for a few msec and then go around
+                // the loop again
+                delay(WAIT_PERIOD);
+            }
         }
     }
 }
