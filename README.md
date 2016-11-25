@@ -318,7 +318,7 @@ alternatively, ask andrew to flash your board.
 reset the wifi config
 
 ```
-curl -v -h "authorization: token <<token>>" 'http://192.168.4.1:9000/wifireset'
+curl -v -H "authorization: token <<token>>" 'http://192.168.4.1:9000/wifiReset'
 ```
 
 set the wifi
