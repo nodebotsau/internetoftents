@@ -12,6 +12,7 @@
 #include "dht_peripheral.h"
 #include "servo_peripheral.h"
 #include "pixel_peripheral.h"
+#include "led_peripheral.h"
 
 #include "./node_modes.h"
 bool _state_config = false;
@@ -70,6 +71,9 @@ void setup_node_peripherals(ESP_MQTTLogger& l) {
             _device_peripheral = new PixelPeripheral();
             break;
 
+        case LED:
+            _device_peripheral = new LedPeripheral();
+            break;
     }
 
     if (_mode > NONE) {
@@ -185,6 +189,8 @@ void set_mode(String modename) {
         _mode = SERVO;
     } else if (modename == "pixel") {
         _mode = PIXEL;
+    } else if (modename == "led") {
+        _mode = LED;
     } else {
         _mode = NONE;
     }

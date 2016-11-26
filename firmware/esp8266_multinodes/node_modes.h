@@ -18,7 +18,8 @@ enum MODES {
     BARO,
     DHT,
     SERVO,
-    PIXEL
+    PIXEL,
+    LED
 };
 
 
